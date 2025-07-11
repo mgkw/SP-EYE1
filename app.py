@@ -957,7 +957,7 @@ def start_monitoring():
         def run_monitoring():
             session_id = '9d427774521140c6f62c431743d91572'
             
-            # حساب التواريخ تلقائياً - من غد إلى قبل شهر بالضبط
+            # حساب التواريخ تلقائياً - من غد إلى قبل شهر بالض
             from datetime import datetime, timedelta
             today = datetime.now()
             tomorrow = today + timedelta(days=1)
@@ -1082,7 +1082,7 @@ def delete_order(wasl_number):
             import threading
             def delete_from_external_system():
                 try:
-        import webbrowser
+                    import webbrowser
                     url = f"https://alkarar-exp.com/manage_newwasl.php?wasl_id={order_number}"
                     webbrowser.open(url, new=2, autoraise=False)
                     print(f"✅ تم فتح رابط الحذف للوصل {wasl_number} (طلب {order_number})")
