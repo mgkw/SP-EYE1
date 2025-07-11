@@ -1088,7 +1088,7 @@ def delete_order(wasl_number):
                     print(f"🔗 رابط الحذف للوصل {wasl_number} (طلب {order_number}): {url}")
                     print(f"⚠️ يرجى فتح الرابط يدوياً لحذف الطلب من النظام الخارجي")
                     
-                except Exception as e:
+    except Exception as e:
                     print(f"❌ خطأ في تسجيل رابط الحذف: {e}")
             
             # تشغيل الحذف الخارجي في الخلفية
@@ -1878,5 +1878,183 @@ def search_customer_orders():
 # متغير التطبيق للـ WSGI (PythonAnywhere)
 application = app
 
+# =============================================================================
+# دمج وظائف السكريبتات - تعمل تلقائياً عند بدء التشغيل
+# =============================================================================
+
+def run_integrated_customer_search():
+    """تشغيل البحث المتكامل عن طلبات العملاء"""
+    try:
+        print("🚀 بدء البحث التلقائي المتكامل عن طلبات العملاء...")
+        
+        # إعداد التواريخ
+        from datetime import datetime, timedelta
+        today = datetime.now()
+        tomorrow = today + timedelta(days=1)
+        one_month_ago = today - timedelta(days=30)
+        
+        end_date = tomorrow.strftime('%m/%d/%Y')
+        start_date = one_month_ago.strftime('%m/%d/%Y')
+        
+        print(f"📅 الفترة: من {start_date} إلى {end_date}")
+        
+        # إعداد البحث
+        session_id = '9d427774521140c6f62c431743d91572'
+        searcher = CustomerOrdersSearch(session_id)
+        
+        # البحث عن جميع العملاء
+        results = searcher.search_all_customers(start_date, end_date)
+        
+        # حفظ النتائج في قاعدة البيانات
+        if results and results.get('total_orders', 0) > 0:
+            print(f"💾 حفظ {results['total_orders']} طلب في قاعدة البيانات...")
+            
+            # حفظ النتائج مباشرة
+            from create_database import CustomerOrdersDatabase
+            db = CustomerOrdersDatabase()
+            if db.create_connection():
+                db.create_tables()
+                db.insert_customers(searcher.customers)
+                db.insert_orders(results, results['period'])
+                db.create_indexes()
+                db.get_statistics()
+                db.close_connection()
+                print("✅ تم حفظ النتائج بنجاح")
+        
+        print("🏁 انتهى البحث التلقائي بنجاح!")
+        return True
+        
+    except Exception as e:
+        print(f"❌ خطأ في البحث التلقائي: {e}")
+        return False
+
+def run_integrated_monitoring():
+    """تشغيل المراقبة المتكاملة"""
+    try:
+        print("🔍 بدء المراقبة التلقائية المتكاملة...")
+        
+        # إعداد التواريخ
+        from datetime import datetime, timedelta
+        today = datetime.now()
+        tomorrow = today + timedelta(days=1)
+        one_month_ago = today - timedelta(days=30)
+        
+        end_date = tomorrow.strftime('%m/%d/%Y')
+        start_date = one_month_ago.strftime('%m/%d/%Y')
+        
+        session_id = '9d427774521140c6f62c431743d91572'
+        monitor = OrderMonitor(session_id)
+        
+        if monitor.create_connection():
+            print("🔄 بدء المراقبة المستمرة...")
+            # تشغيل المراقبة لمدة محدودة في البداية
+            monitor.monitor_orders(start_date, end_date, interval_seconds=30, max_cycles=5)
+            monitor.close_connection()
+            print("✅ تم تشغيل دورة المراقبة الأولى")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ خطأ في المراقبة التلقائية: {e}")
+        return False
+
+def initialize_database_if_needed():
+    """إنشاء قاعدة البيانات إذا لم تكن موجودة"""
+    try:
+        if not os.path.exists(DB_NAME):
+            print("🗄️ إنشاء قاعدة البيانات...")
+            from create_database import CustomerOrdersDatabase
+            db = CustomerOrdersDatabase()
+            if db.create_connection():
+                db.create_tables()
+                
+                # إضافة العملاء الأساسيين
+                customers = [
+                    {'id': 185, 'name': 'سبونجي'},
+                    {'id': 186, 'name': 'العاب ريمي'},
+                    {'id': 187, 'name': 'ويني'},
+                    {'id': 188, 'name': 'كاتي'},
+                    {'id': 189, 'name': 'بندق'},
+                    {'id': 190, 'name': 'مشمش'},
+                    {'id': 191, 'name': 'مشمش2'},
+                    {'id': 192, 'name': 'العاب ماريو'},
+                    {'id': 194, 'name': 'سابوي'},
+                    {'id': 195, 'name': 'العاب نيلزز'},
+                    {'id': 196, 'name': 'العاب زيتونة'},
+                    {'id': 197, 'name': 'بطريق'}
+                ]
+                
+                db.insert_customers(customers)
+                db.create_indexes()
+                db.close_connection()
+                print("✅ تم إنشاء قاعدة البيانات بنجاح")
+                return True
+        return True
+        
+    except Exception as e:
+        print(f"❌ خطأ في إنشاء قاعدة البيانات: {e}")
+        return False
+
+def run_startup_scripts():
+    """تشغيل السكريبتات عند بدء التطبيق"""
+    def startup_thread():
+        try:
+            print("🎯 بدء تشغيل السكريبتات المتكاملة...")
+            
+            # 1. إنشاء قاعدة البيانات إذا لم تكن موجودة
+            if initialize_database_if_needed():
+                print("✅ قاعدة البيانات جاهزة")
+            
+            # انتظار قليل
+            time.sleep(2)
+            
+            # 2. تشغيل البحث التلقائي (مرة واحدة عند البداية)
+            if run_integrated_customer_search():
+                print("✅ البحث التلقائي مكتمل")
+            
+            # انتظار قليل
+            time.sleep(3)
+            
+            # 3. بدء المراقبة المستمرة في الخلفية
+            print("🔄 بدء المراقبة المستمرة في الخلفية...")
+            
+        except Exception as e:
+            print(f"❌ خطأ في تشغيل السكريبتات: {e}")
+    
+    # تشغيل في خيط منفصل لعدم تأخير بدء التطبيق
+    thread = threading.Thread(target=startup_thread)
+    thread.daemon = True
+    thread.start()
+    print("🚀 تم بدء السكريبتات في الخلفية...")
+
+# إضافة route جديد لتشغيل السكريبتات يدوياً
+@app.route('/run_integrated_scripts', methods=['POST'])
+def run_integrated_scripts():
+    """تشغيل السكريبتات المتكاملة يدوياً"""
+    try:
+        def run_scripts():
+            # تشغيل البحث
+            if run_integrated_customer_search():
+                print("✅ البحث المتكامل مكتمل")
+            
+            # تشغيل المراقبة
+            if run_integrated_monitoring():
+                print("✅ المراقبة المتكاملة مكتملة")
+        
+        # تشغيل في خيط منفصل
+        thread = threading.Thread(target=run_scripts)
+        thread.daemon = True
+        thread.start()
+        
+        flash('تم بدء تشغيل السكريبتات المتكاملة في الخلفية!', 'success')
+        
+    except Exception as e:
+        flash(f'خطأ في تشغيل السكريبتات: {str(e)}', 'error')
+    
+    return redirect(url_for('index'))
+
 # بدء المراقبة التلقائية عند تحميل الموديول
 start_background_monitoring()
+
+# تشغيل السكريبتات المتكاملة عند بدء التطبيق
+run_startup_scripts()

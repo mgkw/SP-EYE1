@@ -447,10 +447,16 @@
             </h1>
             <p>نظام مراقبة وإدارة الطلبات المتقدم</p>
             <div class="action-buttons">
-                <form method="POST" action="/run_script" class="d-inline">
+                <form method="POST" action="/run_integrated_scripts" class="d-inline">
                     <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-rocket me-2"></i>
+                        تشغيل السكريبتات المتكاملة
+                    </button>
+                </form>
+                <form method="POST" action="/run_script" class="d-inline">
+                    <button type="submit" class="btn btn-secondary">
                         <i class="fas fa-play me-2"></i>
-                        تشغيل السكريبت
+                        تشغيل السكريبت (معطل)
                     </button>
                 </form>
                 <form method="POST" action="/start_monitoring" class="d-inline">
