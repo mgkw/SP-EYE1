@@ -996,17 +996,14 @@ def start_monitoring():
 
 @app.route('/run_script', methods=['POST'])
 def run_script():
-    """تشغيل سكريبت test.py"""
+    """تشغيل سكريبت test.py - معطل على PythonAnywhere"""
     try:
-        # تشغيل السكريبت في خيط منفصل
-        def run_test_script():
-            subprocess.run(['python', 'test.py'], capture_output=True, text=True)
+        # تشغيل السكريبت معطل على PythonAnywhere لأسباب أمنية
+        # subprocess.run(['python', 'test.py'], capture_output=True, text=True)
         
-        thread = threading.Thread(target=run_test_script)
-        thread.daemon = True
-        thread.start()
+        # بدلاً من ذلك، يمكن استدعاء الوظائف مباشرة
+        flash('تشغيل السكريبت معطل على PythonAnywhere لأسباب أمنية', 'info')
         
-        flash('تم تشغيل السكريبت بنجاح!', 'success')
     except Exception as e:
         flash(f'خطأ في تشغيل السكريبت: {str(e)}', 'error')
     
@@ -1078,23 +1075,28 @@ def delete_order(wasl_number):
             
             order_number = order_data[3]  # order_number هو العمود الرابع
             
-            # فتح رابط الحذف في الخلفية
+            # فتح رابط الحذف في الخلفية - معطل على PythonAnywhere
             import threading
             def delete_from_external_system():
                 try:
-                    import webbrowser
+                    # webbrowser.open() معطل على PythonAnywhere لأسباب أمنية
+                    # url = f"https://alkarar-exp.com/manage_newwasl.php?wasl_id={order_number}"
+                    # webbrowser.open(url, new=2, autoraise=False)
+                    
+                    # بدلاً من ذلك، سجل الرابط في السجلات
                     url = f"https://alkarar-exp.com/manage_newwasl.php?wasl_id={order_number}"
-                    webbrowser.open(url, new=2, autoraise=False)
-                    print(f"✅ تم فتح رابط الحذف للوصل {wasl_number} (طلب {order_number})")
+                    print(f"🔗 رابط الحذف للوصل {wasl_number} (طلب {order_number}): {url}")
+                    print(f"⚠️ يرجى فتح الرابط يدوياً لحذف الطلب من النظام الخارجي")
+                    
                 except Exception as e:
-                    print(f"❌ خطأ في فتح رابط الحذف: {e}")
+                    print(f"❌ خطأ في تسجيل رابط الحذف: {e}")
             
             # تشغيل الحذف الخارجي في الخلفية
             delete_thread = threading.Thread(target=delete_from_external_system)
             delete_thread.daemon = True
             delete_thread.start()
             
-            flash(f'تم حذف الطلب رقم {wasl_number} من قاعدة البيانات ونقله إلى أرشيف المحذوفات. جاري حذفه من النظام الخارجي في الخلفية.', 'success')
+            flash(f'تم حذف الطلب رقم {wasl_number} من قاعدة البيانات ونقله إلى أرشيف المحذوفات. تحقق من السجلات للحصول على رابط الحذف من النظام الخارجي.', 'success')
         else:
             flash(f'لم يتم العثور على الطلب برقم الوصل {wasl_number}', 'error')
     except Exception as e:
@@ -1873,9 +1875,8 @@ def search_customer_orders():
         print(f"خطأ في البحث عن طلبات العميل: {e}")
         return jsonify({'success': False, 'error': 'حدث خطأ في الخادم'})
 
-if __name__ == '__main__':
-    # بدء المراقبة التلقائية
-    start_background_monitoring()
-    
-    # تشغيل الموقع
-    app.run(debug=True, host='0.0.0.0', port=5000) 
+# متغير التطبيق للـ WSGI (PythonAnywhere)
+application = app
+
+# بدء المراقبة التلقائية عند تحميل الموديول
+start_background_monitoring()
