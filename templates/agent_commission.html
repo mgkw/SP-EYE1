@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حساب مستحق العملاء - سبونج إي</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css"/>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --card-glass: rgba(255, 255, 255, 0.95);
+            --card-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            --accent-color: #667eea;
+            --text-primary: #2c3e50;
+            --border-radius: 20px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--primary-gradient);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        .navbar {
+            background: var(--card-glass) !important;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 4px 30px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--accent-color) !important;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .nav-link {
+            font-weight: 500;
+            color: var(--text-primary) !important;
+            transition: all 0.3s ease;
+            border-radius: 10px;
+            margin: 0 5px;
+            padding: 8px 15px !important;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: var(--accent-color);
+            color: white !important;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Container */
+        .container-fluid {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--card-glass);
+            border: none;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            backdrop-filter: blur(20px);
+            margin-bottom: 30px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--accent-color), #764ba2);
+            color: white;
+            border: none;
+            padding: 20px;
+            font-weight: 600;
+        }
+
+        .card-body {
+            padding: 25px;
+        }
+
+        /* Statistics Cards */
+        .stat-card {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            margin: 15px 0;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .stat-card h4 {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .stat-card h5 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+
+        .stat-card h6 {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .stat-card small {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        /* Table Styles */
+        .table {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .table thead th {
+            background: linear-gradient(135deg, var(--accent-color), #764ba2);
+            color: white;
+            font-weight: 600;
+            border: none;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .table tbody td {
+            padding: 15px;
+            vertical-align: middle;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            text-align: center;
+        }
+
+        .table tbody tr:hover {
+            background: rgba(102, 126, 234, 0.05);
+            transform: scale(1.01);
+            transition: all 0.3s ease;
+        }
+
+        .table tfoot td {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            font-weight: 700;
+            border: none;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .amount-display {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        /* Badges */
+        .badge {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        /* Buttons */
+        .btn {
+            border-radius: 15px;
+            font-weight: 600;
+            padding: 12px 25px;
+            border: none;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d, #495057);
+            color: white;
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #17a2b8, #20c997);
+            color: white;
+        }
+
+        /* Form Controls */
+        .form-control, .form-select {
+            border-radius: 15px;
+            border: 2px solid rgba(102, 126, 234, 0.2);
+            padding: 12px 20px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        /* DataTables Customization */
+        .dataTables_wrapper .dataTables_length select,
+        .dataTables_wrapper .dataTables_filter input {
+            border-radius: 10px;
+            border: 2px solid rgba(102, 126, 234, 0.2);
+            padding: 8px 15px;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            border-radius: 10px !important;
+            margin: 0 2px;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            background: var(--accent-color) !important;
+            border-color: var(--accent-color) !important;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container-fluid {
+                padding: 15px;
+            }
+
+            .card-body {
+                padding: 20px;
+            }
+
+            .stat-card {
+                padding: 20px;
+                margin: 10px 0;
+            }
+
+            .stat-card h4 {
+                font-size: 1.1rem;
+            }
+
+            .stat-card h5 {
+                font-size: 1.5rem;
+            }
+
+            .table {
+                font-size: 0.9rem;
+            }
+
+            .table thead th,
+            .table tbody td,
+            .table tfoot td {
+                padding: 10px 8px;
+            }
+
+            .btn {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+
+            .navbar-nav {
+                background: rgba(255,255,255,0.95);
+                border-radius: 15px;
+                padding: 10px;
+                margin-top: 10px;
+            }
+        }
+
+        /* Animation */
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card {
+            animation: slideInUp 0.6s ease-out;
+        }
+
+        .stat-card:nth-child(1) { animation-delay: 0.1s; }
+        .stat-card:nth-child(2) { animation-delay: 0.2s; }
+        .stat-card:nth-child(3) { animation-delay: 0.3s; }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-eye me-2"></i>
+                سبونج إي
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">
+                            <i class="fas fa-home me-1"></i> الرئيسية
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/today_orders">
+                            <i class="fas fa-calendar-day me-1"></i> طلبات اليوم
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/customers">
+                            <i class="fas fa-users me-1"></i> العملاء
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/agent_commission">
+                            <i class="fas fa-money-bill-wave me-1"></i> حساب مستحق
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/isolated">
+                            <i class="fas fa-exclamation-triangle me-1"></i> المعزولة
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/suspended">
+                            <i class="fas fa-clock me-1"></i> المعلقات
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/processed_orders">
+                            <i class="fas fa-check-circle me-1"></i> المعالجة
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/monitoring">
+                            <i class="fas fa-chart-line me-1"></i> المراقبة
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold">
+                <i class="fas fa-money-bill-wave me-2 text-primary"></i>
+                حساب مستحق العملاء
+            </h2>
+            <div>
+                <a href="/suspended" class="btn btn-warning">
+                    <i class="fas fa-clock me-2"></i>
+                    كشف المعلقات
+                </a>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h4 class="text-primary mb-3 fw-bold">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    ملخص مستحق العملاء
+                </h4>
+            </div>
+            
+            <div class="col-lg-4 col-md-6">
+                <div class="stat-card" style="background: linear-gradient(135deg, #e74c3c, #c0392b);">
+                    <h4>
+                        <i class="fas fa-chart-pie me-2"></i>
+                        الإجمالي
+                    </h4>
+                    <div class="row">
+                        <div class="col-6">
+                            <h5>{{ agents | sum(attribute='orders_count') }}</h5>
+                            <small>إجمالي الطلبات المكتملة</small>
+                        </div>
+                        <div class="col-6">
+                            <h5>{{ format_iraqi_dinar(agents | sum(attribute='total_amount')) }}</h5>
+                            <small>إجمالي المبالغ</small>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-6">
+                            <h6>{{ format_iraqi_dinar(agents | sum(attribute='delivery_fee')) }}</h6>
+                            <small>إجمالي رسوم التوصيل</small>
+                        </div>
+                        <div class="col-6">
+                            <h6>{{ format_iraqi_dinar(agents | sum(attribute='net_amount')) }}</h6>
+                            <small>إجمالي المبلغ الصافي</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6">
+                <div class="stat-card" style="background: linear-gradient(135deg, #27ae60, #229954);">
+                    <h4>
+                        <i class="fas fa-check-circle me-2"></i>
+                        تم التسليم
+                    </h4>
+                    <div class="row">
+                        <div class="col-6">
+                            <h5>{{ agents | sum(attribute='delivered_count') }}</h5>
+                            <small>عدد الطلبات المسلمة</small>
+                        </div>
+                        <div class="col-6">
+                            <h5>{{ format_iraqi_dinar(agents | sum(attribute='delivered_amount')) }}</h5>
+                            <small>إجمالي مبالغ التسليم</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6">
+                <div class="stat-card" style="background: linear-gradient(135deg, #f39c12, #e67e22);">
+                    <h4>
+                        <i class="fas fa-calculator me-2"></i>
+                        تم محاسبة المندوب
+                    </h4>
+                    <div class="row">
+                        <div class="col-6">
+                            <h5>{{ agents | sum(attribute='mandob_accounted_count') }}</h5>
+                            <small>عدد الطلبات المحاسبة</small>
+                        </div>
+                        <div class="col-6">
+                            <h5>{{ format_iraqi_dinar(agents | sum(attribute='mandob_accounted_amount')) }}</h5>
+                            <small>إجمالي مبالغ المحاسبة</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-users me-2"></i>
+                    تفاصيل مستحق العملاء - {{ agents|length }} عميل
+                </h5>
+                <small class="text-light">(تم التسليم وتم محاسبة المندوب)</small>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover w-100" id="agentsTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>اسم العميل</th>
+                                <th>إجمالي الطلبات</th>
+                                <th>إجمالي المبالغ</th>
+                                <th>رسوم التوصيل</th>
+                                <th>المبلغ الصافي</th>
+                                <th>تم التسليم</th>
+                                <th>تم محاسبة المندوب</th>
+                                <th>متوسط الطلب</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for agent in agents %}
+                            <tr>
+                                <td><strong>{{ loop.index }}</strong></td>
+                                <td>
+                                    <span class="fw-bold text-primary">{{ agent.customer_name }}</span>
+                                </td>
+                                <td><span class="badge bg-primary">{{ agent.orders_count }}</span></td>
+                                <td class="amount-display text-success">{{ format_iraqi_dinar(agent.total_amount) }}</td>
+                                <td class="amount-display text-warning">{{ format_iraqi_dinar(agent.delivery_fee) }}</td>
+                                <td class="amount-display text-info">{{ format_iraqi_dinar(agent.net_amount) }}</td>
+                                <td>
+                                    <span class="badge bg-success">{{ agent.delivered_count }}</span>
+                                    <br>
+                                    <small class="text-muted">{{ format_iraqi_dinar(agent.delivered_amount) }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-warning">{{ agent.mandob_accounted_count }}</span>
+                                    <br>
+                                    <small class="text-muted">{{ format_iraqi_dinar(agent.mandob_accounted_amount) }}</small>
+                                </td>
+                                <td class="amount-display text-primary">{{ format_iraqi_dinar(agent.total_amount / agent.orders_count if agent.orders_count > 0 else 0) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="2"><strong>المجموع</strong></td>
+                                <td><strong>{{ agents | sum(attribute='orders_count') }}</strong></td>
+                                <td><strong>{{ format_iraqi_dinar(agents | sum(attribute='total_amount')) }}</strong></td>
+                                <td><strong>{{ format_iraqi_dinar(agents | sum(attribute='delivery_fee')) }}</strong></td>
+                                <td><strong>{{ format_iraqi_dinar(agents | sum(attribute='net_amount')) }}</strong></td>
+                                <td>
+                                    <strong>{{ agents | sum(attribute='delivered_count') }}</strong>
+                                    <br>
+                                    <small>{{ format_iraqi_dinar(agents | sum(attribute='delivered_amount')) }}</small>
+                                </td>
+                                <td>
+                                    <strong>{{ agents | sum(attribute='mandob_accounted_count') }}</strong>
+                                    <br>
+                                    <small>{{ format_iraqi_dinar(agents | sum(attribute='mandob_accounted_amount')) }}</small>
+                                </td>
+                                <td><strong>-</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            // تفعيل DataTables
+            $('#agentsTable').DataTable({
+                "paging": true,
+                "lengthMenu": [10, 20, 30, 40, 50, 60, 70, 100],
+                "pageLength": 20,
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/ar.json"
+                },
+                "ordering": true,
+                "info": true,
+                "searching": true,
+                "responsive": true,
+                "autoWidth": false,
+                "order": [[2, "desc"]], // ترتيب حسب عدد الطلبات
+                "columnDefs": [
+                    {
+                        "targets": [3, 4, 5, 8], // أعمدة المبالغ
+                        "type": "num-fmt"
+                    }
+                ]
+            });
+        });
+    </script>
+</body>
+</html> 

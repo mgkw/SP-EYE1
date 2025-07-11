@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تقرير الطلبات المعلقة - طباعة حرارية - {{ current_date }}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@400;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        /* إعدادات الطباعة الحرارية */
+        @media print {
+            @page {
+                size: A4;
+                margin: 0.5cm;
+            }
+            
+            body {
+                font-family: 'Tajawal', 'Arial', sans-serif;
+                font-size: 10px;
+                line-height: 1.3;
+                color: #000;
+                background: #fff;
+                margin: 0;
+                padding: 0;
+            }
+            
+            .no-print {
+                display: none !important;
+            }
+            
+            .thermal-container {
+                width: 100%;
+                max-width: none;
+                margin: 0;
+                padding: 0;
+                background: #fff;
+                color: #000;
+                box-shadow: none;
+                border: none;
+            }
+            
+            .thermal-header {
+                background: #000 !important;
+                color: #fff !important;
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            .thermal-stats {
+                background: #f8f8f8 !important;
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            .thermal-table {
+                page-break-inside: avoid;
+            }
+            
+            .thermal-table th {
+                background: #000 !important;
+                color: #fff !important;
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            .thermal-table tbody tr:nth-child(even) {
+                background: #f5f5f5 !important;
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            .thermal-footer {
+                background: #000 !important;
+                color: #fff !important;
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+        
+        body {
+            font-family: 'Tajawal', 'Arial', sans-serif;
+            background: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .thermal-container {
+            max-width: 210mm;
+            margin: 0 auto;
+            background: #fff;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            border: 1px solid #ddd;
+        }
+        
+        .thermal-header {
+            background: #000;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 3px solid #333;
+        }
+        
+        .thermal-header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .thermal-header .company-name {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .thermal-header .report-date {
+            font-size: 14px;
+            margin-top: 10px;
+            opacity: 0.9;
+        }
+        
+        .thermal-meta {
+            background: #fff;
+            padding: 15px;
+            border-bottom: 2px solid #000;
+        }
+        
+        .meta-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .meta-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        .meta-label {
+            color: #000;
+            font-weight: 700;
+        }
+        
+        .meta-value {
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .thermal-stats {
+            background: #f8f8f8;
+            padding: 15px;
+            border-bottom: 2px solid #000;
+        }
+        
+        .stats-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #000;
+            margin-bottom: 10px;
+            text-align: center;
+            text-transform: uppercase;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+        
+        .stat-item {
+            background: #fff;
+            border: 2px solid #000;
+            padding: 8px;
+            text-align: center;
+        }
+        
+        .stat-item .stat-number {
+            font-size: 18px;
+            font-weight: 700;
+            color: #000;
+            display: block;
+        }
+        
+        .stat-item .stat-label {
+            font-size: 10px;
+            color: #666;
+            margin-top: 2px;
+        }
+        
+        .thermal-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0;
+            font-size: 9px;
+        }
+        
+        .thermal-table th {
+            background: #000;
+            color: #fff;
+            padding: 8px 4px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 8px;
+            border: 1px solid #333;
+        }
+        
+        .thermal-table td {
+            padding: 6px 4px;
+            text-align: right;
+            border: 1px solid #ddd;
+            font-size: 8px;
+            line-height: 1.2;
+        }
+        
+        .thermal-table tbody tr:nth-child(even) {
+            background: #f5f5f5;
+        }
+        
+        .thermal-table tbody tr:hover {
+            background: #e8e8e8;
+        }
+        
+        .thermal-wasl {
+            font-weight: 700;
+            color: #000;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .thermal-customer {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .thermal-amount {
+            font-family: 'Courier New', monospace;
+            font-weight: 700;
+            color: #000;
+            text-align: center;
+            background: #f0f0f0;
+        }
+        
+        .thermal-status {
+            font-size: 7px;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: 700;
+            text-align: center;
+            text-transform: uppercase;
+        }
+        
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .status-delayed {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status-rejected {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .status-returned {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status-delivered {
+            background: #cce5ff;
+            color: #004085;
+            border: 1px solid #b8daff;
+        }
+        
+        .status-accounted {
+            background: #e2e3e5;
+            color: #383d41;
+            border: 1px solid #d6d8db;
+        }
+        
+        .thermal-footer {
+            background: #000;
+            color: #fff;
+            padding: 15px;
+            text-align: center;
+            margin-top: 0;
+        }
+        
+        .thermal-footer .footer-title {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .thermal-footer .footer-info {
+            font-size: 10px;
+            margin: 2px 0;
+        }
+        
+        .thermal-footer .footer-copyright {
+            font-size: 8px;
+            margin-top: 8px;
+            opacity: 0.8;
+        }
+        
+        .print-thermal-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: #000;
+            color: #fff;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 700;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        
+        .print-thermal-btn:hover {
+            background: #333;
+            transform: translateY(-2px);
+        }
+        
+        .section-break {
+            height: 2px;
+            background: #000;
+            margin: 0;
+        }
+        
+        .row-number {
+            font-weight: 700;
+            color: #000;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .thermal-city {
+            font-size: 8px;
+            color: #555;
+        }
+        
+        .thermal-mandob {
+            font-size: 8px;
+            color: #666;
+            font-style: italic;
+        }
+        
+        .thermal-date {
+            font-size: 7px;
+            color: #888;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .thermal-suspension {
+            font-size: 7px;
+            color: #d32f2f;
+            font-weight: 600;
+            background: #ffebee;
+            padding: 1px 3px;
+            border-radius: 2px;
+        }
+        
+        .total-summary {
+            background: #000;
+            color: #fff;
+            padding: 10px;
+            margin: 0;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        
+        @media (max-width: 768px) {
+            .thermal-container {
+                margin: 0;
+                max-width: 100%;
+            }
+            
+            .thermal-table {
+                font-size: 8px;
+            }
+            
+            .thermal-table th,
+            .thermal-table td {
+                padding: 4px 2px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="print-thermal-btn no-print" onclick="window.print()">
+        🖨️ طباعة حرارية A4
+    </button>
+    
+    <div class="thermal-container">
+        <!-- رأس التقرير الحراري -->
+        <div class="thermal-header">
+            <h1>تقرير الطلبات المعلقة</h1>
+            <div class="company-name">سبونج إي - عيننا على كل شيء</div>
+            <div class="report-date">{{ current_date }} - {{ current_time }}</div>
+        </div>
+        
+        <!-- معلومات التقرير -->
+        <div class="thermal-meta">
+            <div class="meta-row">
+                <span class="meta-label">تاريخ التقرير:</span>
+                <span class="meta-value">{{ current_date }}</span>
+            </div>
+            <div class="meta-row">
+                <span class="meta-label">وقت الإنشاء:</span>
+                <span class="meta-value">{{ current_time }}</span>
+            </div>
+            <div class="meta-row">
+                <span class="meta-label">إجمالي الطلبات:</span>
+                <span class="meta-value">{{ total_orders }}</span>
+            </div>
+            <div class="meta-row">
+                <span class="meta-label">المبلغ الإجمالي:</span>
+                <span class="meta-value">{{ format_iraqi_dinar(total_amount) }}</span>
+            </div>
+        </div>
+        
+        <!-- الإحصائيات -->
+        <div class="thermal-stats">
+            <div class="stats-title">إحصائيات الحالات</div>
+            <div class="stats-grid">
+                {% for status, count in status_stats.items() %}
+                <div class="stat-item">
+                    <span class="stat-number">{{ count }}</span>
+                    <span class="stat-label">{{ status }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="section-break"></div>
+        
+        <!-- المجموع الكلي -->
+        <div class="total-summary">
+            إجمالي المبلغ: {{ format_iraqi_dinar(total_amount) }} | عدد الطلبات: {{ total_orders }}
+        </div>
+        
+        <div class="section-break"></div>
+        
+        <!-- جدول الطلبات -->
+        <table class="thermal-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>رقم الوصل</th>
+                    <th>رقم الطلب</th>
+                    <th>العميل</th>
+                    <th>المدينة</th>
+                    <th>المنطقة</th>
+                    <th>المبلغ</th>
+                    <th>الحالة</th>
+                    <th>المندوب</th>
+                    <th>التاريخ</th>
+                    <th>سبب التعليق</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td class="row-number">{{ loop.index }}</td>
+                    <td class="thermal-wasl">{{ order.wasl_number }}</td>
+                    <td>{{ order.order_number }}</td>
+                    <td class="thermal-customer">{{ order.customer_name }}</td>
+                    <td class="thermal-city">{{ order.city }}</td>
+                    <td>{{ order.area }}</td>
+                    <td class="thermal-amount">{{ format_iraqi_dinar(order.total_amount) }}</td>
+                    <td>
+                        <span class="thermal-status 
+                            {% if order.status == 'قيد التنفيذ' %}status-pending
+                            {% elif order.status == 'مؤجل' %}status-delayed
+                            {% elif order.status == 'رفض' %}status-rejected
+                            {% elif order.status == 'راجع مخزن' %}status-returned
+                            {% elif order.status == 'تم التسليم' %}status-delivered
+                            {% elif order.status == 'تم محاسبة المندوب' %}status-accounted
+                            {% endif %}">
+                            {{ order.status }}
+                        </span>
+                    </td>
+                    <td class="thermal-mandob">{{ order.mandob_name or 'غير محدد' }}</td>
+                    <td class="thermal-date">{{ order.add_date }}</td>
+                    <td class="thermal-suspension">
+                        {{ order.suspension_reason if order.suspension_reason else '-' }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div class="section-break"></div>
+        
+        <!-- تذييل التقرير -->
+        <div class="thermal-footer">
+            <div class="footer-title">سبونج إي - عيننا على كل شيء</div>
+            <div class="footer-info">تم إنشاء التقرير: {{ current_date }} - {{ current_time }}</div>
+            <div class="footer-info">طباعة حرارية عالية الجودة - ورق A4</div>
+            <div class="footer-copyright">جميع الحقوق محفوظة © {{ current_year }} - نظام مراقبة الطلبات</div>
+        </div>
+    </div>
+    
+    <script>
+        // تحسين الطباعة الحرارية
+        window.addEventListener('beforeprint', function() {
+            console.log('🖨️ بدء الطباعة الحرارية...');
+            document.body.style.backgroundColor = '#fff';
+        });
+        
+        window.addEventListener('afterprint', function() {
+            console.log('✅ انتهت الطباعة الحرارية');
+        });
+        
+        // اختصارات الطباعة
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'p') {
+                e.preventDefault();
+                window.print();
+            }
+        });
+        
+        // تحسين عرض الجدول للطباعة
+        function optimizeForPrint() {
+            const table = document.querySelector('.thermal-table');
+            const rows = table.querySelectorAll('tbody tr');
+            
+            // إضافة فواصل صفحات ذكية
+            rows.forEach((row, index) => {
+                if ((index + 1) % 25 === 0) {
+                    row.style.pageBreakAfter = 'always';
+                }
+            });
+        }
+        
+        // تشغيل التحسينات عند تحميل الصفحة
+        window.onload = function() {
+            optimizeForPrint();
+        };
+    </script>
+</body>
+</html> 

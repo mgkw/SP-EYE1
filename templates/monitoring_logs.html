@@ -1,0 +1,191 @@
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-eye me-2"></i>سجلات المراقبة</h2>
+            <div>
+                <a href="/suspended" class="btn btn-warning btn-lg">
+                    <i class="fas fa-clock me-2"></i>
+                    كشف المعلقات
+                </a>
+            </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-filter me-2"></i>
+                    فلترة البيانات
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label class="form-label">البحث في النص:</label>
+                        <input type="text" class="form-control" id="searchInput" placeholder="ابحث في أي حقل...">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">نوع التغيير:</label>
+                        <select class="form-select" id="changeTypeFilter">
+                            <option value="">جميع الأنواع</option>
+                            <option value="status">تغيير الحالة</option>
+                            <option value="amount">تغيير المبلغ</option>
+                            <option value="new">طلب جديد</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">التاريخ:</label>
+                        <select class="form-select" id="dateFilter">
+                            <option value="">جميع التواريخ</option>
+                            <option value="today">اليوم</option>
+                            <option value="yesterday">أمس</option>
+                            <option value="week">هذا الأسبوع</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">العميل:</label>
+                        <select class="form-select" id="customerFilter">
+                            <option value="">جميع العملاء</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <button class="btn btn-secondary" onclick="clearFilters()">
+                            <i class="fas fa-times me-1"></i>
+                            مسح الفلاتر
+                        </button>
+                        <button class="btn btn-info" onclick="exportFilteredData()">
+                            <i class="fas fa-download me-1"></i>
+                            تصدير البيانات المفلترة
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div> 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // دالة الفلترة
+        function filterData() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const changeTypeFilter = document.getElementById('changeTypeFilter').value;
+            const dateFilter = document.getElementById('dateFilter').value;
+            const customerFilter = document.getElementById('customerFilter').value;
+            
+            const rows = document.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                let show = true;
+                
+                // فلترة النص
+                if (searchTerm) {
+                    const text = row.textContent.toLowerCase();
+                    if (!text.includes(searchTerm)) {
+                        show = false;
+                    }
+                }
+                
+                // فلترة نوع التغيير
+                if (changeTypeFilter && show) {
+                    const changeType = row.querySelector('td:nth-child(2)')?.textContent.trim();
+                    if (changeType !== changeTypeFilter) {
+                        show = false;
+                    }
+                }
+                
+                // فلترة التاريخ
+                if (dateFilter && show) {
+                    const dateText = row.querySelector('td:nth-child(4)')?.textContent.trim();
+                    const logDate = new Date(dateText);
+                    const today = new Date();
+                    
+                    switch(dateFilter) {
+                        case 'today':
+                            if (logDate.toDateString() !== today.toDateString()) show = false;
+                            break;
+                        case 'yesterday':
+                            const yesterday = new Date(today);
+                            yesterday.setDate(yesterday.getDate() - 1);
+                            if (logDate.toDateString() !== yesterday.toDateString()) show = false;
+                            break;
+                        case 'week':
+                            const weekAgo = new Date(today);
+                            weekAgo.setDate(weekAgo.getDate() - 7);
+                            if (logDate < weekAgo) show = false;
+                            break;
+                    }
+                }
+                
+                // فلترة العميل
+                if (customerFilter && show) {
+                    const customer = row.querySelector('td:nth-child(3)')?.textContent.trim();
+                    if (customer !== customerFilter) {
+                        show = false;
+                    }
+                }
+                
+                row.style.display = show ? '' : 'none';
+            });
+        }
+        
+        // مسح الفلاتر
+        function clearFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('changeTypeFilter').value = '';
+            document.getElementById('dateFilter').value = '';
+            document.getElementById('customerFilter').value = '';
+            
+            const rows = document.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                row.style.display = '';
+            });
+        }
+        
+        // تصدير البيانات المفلترة
+        function exportFilteredData() {
+            const visibleRows = Array.from(document.querySelectorAll('tbody tr')).filter(row => 
+                row.style.display !== 'none'
+            );
+            
+            let csv = 'رقم الوصل,نوع التغيير,العميل,التاريخ,التفاصيل\n';
+            
+            visibleRows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                const rowData = [
+                    cells[0]?.textContent.trim(),
+                    cells[1]?.textContent.trim(),
+                    cells[2]?.textContent.trim(),
+                    cells[3]?.textContent.trim(),
+                    cells[4]?.textContent.trim()
+                ];
+                csv += rowData.join(',') + '\n';
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'سجلات_المراقبة_المفلترة.csv';
+            link.click();
+        }
+        
+        // إضافة مستمعي الأحداث
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('searchInput').addEventListener('input', filterData);
+            document.getElementById('changeTypeFilter').addEventListener('change', filterData);
+            document.getElementById('dateFilter').addEventListener('change', filterData);
+            document.getElementById('customerFilter').addEventListener('change', filterData);
+            
+            // ملء قائمة العملاء
+            const customers = new Set();
+            document.querySelectorAll('tbody tr td:nth-child(3)').forEach(cell => {
+                const customer = cell.textContent.trim();
+                if (customer) customers.add(customer);
+            });
+            
+            const customerSelect = document.getElementById('customerFilter');
+            customers.forEach(customer => {
+                const option = document.createElement('option');
+                option.value = customer;
+                option.textContent = customer;
+                customerSelect.appendChild(option);
+            });
+        });
+    </script> 

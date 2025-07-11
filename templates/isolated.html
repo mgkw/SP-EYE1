@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الطلبات المعزولة - سبونج إي</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css"/>
+    <style>
+        :root {
+            /* نظام الألوان المخصص للحالات */
+            --color-accounted: #87CEEB;
+            --color-mandob-accounted: #191970;
+            --color-customer-accounted: #6495ED;
+            --color-delivered: #28a745;
+            --color-rejected: #B22222;
+            --color-partial-return: #FFB6C1;
+            --color-delayed: #FFA500;
+            --color-in-progress: #FFD700;
+            --color-unconfirmed: #708090;
+            --color-partial-return-yellow: #FF6347;
+            --color-partial-delivered: #006400;
+            
+            /* ألوان التصميم العام */
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --card-bg: rgba(255,255,255,0.95);
+            --glass-effect: rgba(255,255,255,0.1);
+        }
+        
+        body {
+            background: var(--primary-gradient);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 14px;
+        }
+        
+        /* تحسينات للهواتف المحمولة */
+        @media (max-width: 768px) {
+            body { font-size: 12px; }
+            .container-fluid { padding: 10px; }
+            .card-body { padding: 15px; }
+            .table-responsive { border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+            .btn-sm { padding: 4px 8px; font-size: 11px; }
+            .badge { font-size: 0.7em; padding: 4px 8px; }
+        }
+        
+        /* تصميم البطاقات الحديث */
+        .card {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            backdrop-filter: blur(15px);
+            background: var(--card-bg);
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+        
+        /* شريط التنقل المحسن */
+        .navbar {
+            background: var(--card-bg) !important;
+            backdrop-filter: blur(15px);
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .navbar-brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .nav-link {
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border-radius: 10px;
+            margin: 0 5px;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            background: var(--glass-effect);
+            transform: translateY(-2px);
+        }
+        
+        /* تصميم الجدول المحسن */
+        .table {
+            background: var(--card-bg);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        
+        .table thead th {
+            background: var(--primary-gradient);
+            color: white;
+            font-weight: 600;
+            border: none;
+            padding: 15px 10px;
+        }
+        
+        .table tbody tr {
+            transition: all 0.3s ease;
+        }
+        
+        .table tbody tr:hover {
+            background: var(--glass-effect);
+            transform: scale(1.01);
+        }
+        
+        /* نظام الألوان المخصص للحالات */
+        .status-accounted { background: var(--color-accounted) !important; color: #000 !important; }
+        .status-mandob-accounted { background: var(--color-mandob-accounted) !important; color: #fff !important; }
+        .status-customer-accounted { background: var(--color-customer-accounted) !important; color: #fff !important; }
+        .status-delivered { background: var(--color-delivered) !important; color: #fff !important; }
+        .status-rejected { background: var(--color-rejected) !important; color: #fff !important; }
+        .status-partial-return { background: var(--color-partial-return) !important; color: #000 !important; }
+        .status-delayed { background: var(--color-delayed) !important; color: #000 !important; }
+        .status-in-progress { background: var(--color-in-progress) !important; color: #000 !important; }
+        .status-unconfirmed { background: var(--color-unconfirmed) !important; color: #fff !important; }
+        .status-partial-return-yellow { background: var(--color-partial-return-yellow) !important; color: #fff !important; }
+        .status-partial-delivered { background: var(--color-partial-delivered) !important; color: #fff !important; }
+        .status-warehouse-return { background: #8A2BE2 !important; color: #fff !important; }
+        
+        .badge {
+            font-size: 0.8em;
+            padding: 8px 12px;
+            border-radius: 25px;
+            font-weight: 600;
+            text-transform: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        
+        /* تحسينات للأزرار */
+        .btn {
+            border-radius: 15px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        
+        /* تحسينات للفلاتر */
+        .form-control, .form-select {
+            border-radius: 15px;
+            border: 2px solid var(--glass-effect);
+            background: var(--card-bg);
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        /* تحسينات للتنبيهات */
+        .alert {
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .alert-danger {
+            background: rgba(220, 53, 69, 0.1);
+            border: 1px solid rgba(220, 53, 69, 0.3);
+        }
+        
+        /* تحسينات للمبالغ */
+        .amount-display {
+            font-weight: 700;
+            color: #28a745;
+            font-family: 'Courier New', monospace;
+        }
+        
+        /* سبب العزل */
+        .isolation-reason {
+            font-size: 0.9em;
+            color: #dc3545;
+            font-weight: 600;
+            background: rgba(220, 53, 69, 0.1);
+            padding: 5px 10px;
+            border-radius: 10px;
+            border: 1px solid rgba(220, 53, 69, 0.3);
+        }
+        
+        /* تأثيرات الحركة */
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        /* تحسينات للأيقونات */
+        .fas, .far {
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover .fas, .btn:hover .far {
+            transform: scale(1.1);
+        }
+        
+        /* تحسينات DataTables للهواتف */
+        @media (max-width: 768px) {
+            .dataTables_wrapper .dataTables_length,
+            .dataTables_wrapper .dataTables_filter {
+                text-align: center;
+                margin-bottom: 10px;
+            }
+            
+            .dataTables_wrapper .dataTables_info,
+            .dataTables_wrapper .dataTables_paginate {
+                text-align: center;
+                margin-top: 10px;
+            }
+            
+            .dataTables_wrapper .dataTables_paginate .paginate_button {
+                padding: 5px 10px;
+                margin: 2px;
+                border-radius: 10px;
+            }
+        }
+        
+        /* تحسينات للأزرار التفاعلية */
+        .btn-process {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-process:hover {
+            background: linear-gradient(45deg, #20c997, #28a745);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(40, 167, 69, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <!-- شريط التنقل المحسن -->
+    <nav class="navbar navbar-expand-lg navbar-light sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="fas fa-eye me-2"></i>
+                سبونج إي
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/"><i class="fas fa-home me-1"></i> الرئيسية</a>
+                <a class="nav-link" href="/today_orders"><i class="fas fa-calendar-day me-1"></i> طلبات اليوم</a>
+                <a class="nav-link" href="/customers"><i class="fas fa-users me-1"></i> العملاء</a>
+                <a class="nav-link" href="/agent_commission"><i class="fas fa-money-bill-wave me-1"></i> حساب مستحق</a>
+                <a class="nav-link active" href="/isolated"><i class="fas fa-exclamation-triangle me-1"></i> المعزولة</a>
+                <a class="nav-link" href="/suspended"><i class="fas fa-clock me-1"></i> المعلقات</a>
+                <a class="nav-link" href="/processed_orders"><i class="fas fa-check-circle me-1"></i> المعالجة</a>
+                <a class="nav-link" href="/monitoring"><i class="fas fa-history me-1"></i> السجل</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="alert alert-danger slide-in">
+            <h5><i class="fas fa-exclamation-triangle me-2"></i>تحذير!</h5>
+            <p class="mb-0">هذه الطلبات تم عزلها بسبب تغييرات مشبوهة أو مشاكل في البيانات وتحتاج إلى مراجعة فورية.</p>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-4 slide-in">
+            <h2><i class="fas fa-exclamation-triangle me-2"></i>الطلبات المعزولة</h2>
+            <div class="d-flex flex-wrap gap-2">
+                <span class="badge status-rejected">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    {{ orders|length }} طلب معزول
+                </span>
+                <a href="/processed_orders" class="btn btn-success btn-lg">
+                    <i class="fas fa-check-circle me-2"></i>
+                    الطلبات المعالجة
+                </a>
+            </div>
+        </div>
+
+        <!-- قسم الفلاتر -->
+        <div class="card mb-4 slide-in">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-filter me-2"></i>
+                    فلترة البيانات
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-lg-3 col-md-6 col-sm-12 mb-3">
+                        <label class="form-label">البحث في النص:</label>
+                        <input type="text" class="form-control" id="searchInput" placeholder="ابحث في أي حقل...">
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-sm-12 mb-3">
+                        <label class="form-label">الحالة:</label>
+                        <select class="form-select" id="statusFilter">
+                            <option value="">جميع الحالات</option>
+                            <option value="قيد التنفيذ">قيد التنفيذ</option>
+                            <option value="تم التسليم">تم التسليم</option>
+                            <option value="مؤجل">مؤجل</option>
+                            <option value="رفض">رفض</option>
+                            <option value="راجع مخزن">راجع مخزن</option>
+                            <option value="تم محاسبة المندوب">تم محاسبة المندوب</option>
+                            <option value="تم محاسبة العميل">تم محاسبة العميل</option>
+                            <option value="تم المحاسبة">تم المحاسبة</option>
+                            <option value="راجع جزئي">راجع جزئي</option>
+                            <option value="واصل جزئي">واصل جزئي</option>
+                            <option value="غير مؤكد">غير مؤكد</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-sm-12 mb-3">
+                        <label class="form-label">المدينة:</label>
+                        <select class="form-select" id="cityFilter">
+                            <option value="">جميع المدن</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-sm-12 mb-3">
+                        <label class="form-label">المبلغ:</label>
+                        <select class="form-select" id="amountFilter">
+                            <option value="">جميع المبالغ</option>
+                            <option value="0-10000">أقل من 10,000</option>
+                            <option value="10000-50000">10,000 - 50,000</option>
+                            <option value="50000-100000">50,000 - 100,000</option>
+                            <option value="100000+">أكثر من 100,000</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="d-flex flex-wrap gap-2">
+                        <button class="btn btn-secondary" onclick="clearFilters()">
+                            <i class="fas fa-times me-1"></i>
+                            مسح الفلاتر
+                        </button>
+                        <button class="btn btn-info" onclick="exportFilteredData()">
+                            <i class="fas fa-download me-1"></i>
+                            تصدير البيانات المفلترة
+                        </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- جدول الطلبات المعزولة -->
+        <div class="card slide-in">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    الطلبات المعزولة - {{ orders|length }} طلب
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover w-100" id="isolatedTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>رقم الوصل</th>
+                                <th>رقم الطلب</th>
+                                <th>العميل</th>
+                                <th>المبلغ</th>
+                                <th>الحالة</th>
+                                <th>سبب العزل</th>
+                                <th>تاريخ العزل</th>
+                                <th>المدينة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in orders %}
+                            <tr>
+                                <td><strong>{{ loop.index }}</strong></td>
+                                <td>{{ order.wasl_number }}</td>
+                                <td>{{ order.order_number }}</td>
+                                <td>{{ order.customer_name }}</td>
+                                <td class="amount-display">{{ format_iraqi_dinar(order.total_amount) }}</td>
+                                <td>
+                                    <span class="badge" data-status="{{ order.status }}">
+                                        {{ order.status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="isolation-reason">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>
+                                        {{ order.reason }}
+                                    </span>
+                                </td>
+                                <td>{{ order.isolated_at }}</td>
+                                <td>{{ order.city }}</td>
+                                <td>
+                                    <button class="btn btn-info btn-sm me-1" 
+                                            title="نسخ معلومات الطلب"
+                                            onclick="copyOrderInfo(event, '{{ order.wasl_number }}', '{{ order.customer_name }}', '{{ format_iraqi_dinar(order.total_amount) }}', '{{ order.status }}', '{{ order.customer_phone }}', '{{ order.city }}', '{{ order.area }}')">
+                                        <i class="fas fa-copy me-1"></i> نسخ
+                                    </button>
+                                    <a class="btn btn-secondary btn-sm me-1" 
+                                       title="طباعة الوصل"
+                                       href="https://alkarar-exp.com/print_waslAll.php?wasl_id={{ order.order_number }}" 
+                                       target="_blank">
+                                        <i class="fas fa-print me-1"></i> طباعة
+                                    </a>
+                                    <button class="btn btn-process btn-sm" 
+                                            title="تمييز كمعالج"
+                                            onclick="markAsProcessed('{{ order.wasl_number }}', event)">
+                                        <i class="fas fa-check me-1"></i> معالج
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- تحميل المكتبات -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+    <!-- تفعيل DataTables -->
+    <script>
+    $(document).ready(function() {
+        // تفعيل DataTables مع إعدادات محسنة
+        $('#isolatedTable').DataTable({
+            "paging": true,
+            "lengthMenu": [10, 20, 30, 40, 50, 60, 70, 100],
+            "pageLength": 20,
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/ar.json"
+            },
+            "ordering": true,
+            "info": true,
+            "searching": true,
+            "responsive": true,
+            "autoWidth": false,
+            "columnDefs": [
+                { "width": "5%", "targets": 0 },
+                { "width": "10%", "targets": [1, 2] },
+                { "width": "15%", "targets": 3 },
+                { "width": "10%", "targets": 4 },
+                { "width": "8%", "targets": 5 },
+                { "width": "15%", "targets": 6 },
+                { "width": "12%", "targets": 7 },
+                { "width": "8%", "targets": 8 },
+                { "width": "17%", "targets": 9 }
+            ],
+            "drawCallback": function(settings) {
+                // تطبيق نظام الألوان المخصص
+                applyCustomStatusColors();
+            }
+        });
+        
+        // تطبيق تأثيرات الحركة
+        $('.slide-in').each(function(index) {
+            $(this).delay(index * 100).queue(function(next) {
+                $(this).addClass('slide-in');
+                next();
+            });
+        });
+        
+        // تطبيق الألوان المخصصة عند تحميل الصفحة
+        applyCustomStatusColors();
+    });
+    
+    // دالة تطبيق الألوان المخصصة للحالات
+    function applyCustomStatusColors() {
+        $('.badge').each(function() {
+            const status = $(this).text().trim();
+            $(this).removeClass('bg-success bg-warning bg-danger bg-primary bg-info bg-secondary');
+            
+            switch(status) {
+                case 'تم المحاسبة':
+                    $(this).addClass('status-accounted');
+                    break;
+                case 'تم محاسبة المندوب':
+                    $(this).addClass('status-mandob-accounted');
+                    break;
+                case 'تم محاسبة العميل':
+                    $(this).addClass('status-customer-accounted');
+                    break;
+                case 'تم التسليم':
+                    $(this).addClass('status-delivered');
+                    break;
+                case 'رفض':
+                    $(this).addClass('status-rejected');
+                    break;
+                case 'راجع جزئي':
+                    $(this).addClass('status-partial-return-yellow');
+                    break;
+                case 'مؤجل':
+                    $(this).addClass('status-delayed');
+                    break;
+                case 'قيد التنفيذ':
+                    $(this).addClass('status-in-progress');
+                    break;
+                case 'غير مؤكد':
+                    $(this).addClass('status-unconfirmed');
+                    break;
+                case 'واصل جزئي':
+                    $(this).addClass('status-partial-delivered');
+                    break;
+                case 'راجع مخزن':
+                    $(this).addClass('status-warehouse-return');
+                    break;
+                default:
+                    $(this).addClass('status-unconfirmed');
+            }
+        });
+    }
+    </script>
+
+    <!-- الكود الأصلي للوظائف -->
+    <script>
+        function copyOrderInfo(event, waslNumber, customerName, amount, status, phone, city, area) {
+            const orderInfo = `🧾 رقم الوصل: ${waslNumber}
+🔴 هاتف الزبون: ${phone || 'غير محدد'}
+🏢 المحافظة: ${city || 'غير محدد'}
+🏢 المنطقة: ${area || 'غير محدد'}
+🔴 السعر: ${amount}
+📛 اسم العميل: ${customerName}
+📊 الحالة: ${status}`;
+            
+            navigator.clipboard.writeText(orderInfo).then(function() {
+                // إظهار رسالة نجاح مع تأثيرات
+                const button = event.target.closest('button');
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-check me-1"></i> تم النسخ';
+                button.className = 'btn btn-success btn-sm me-1';
+                
+                setTimeout(function() {
+                    button.innerHTML = originalText;
+                    button.className = 'btn btn-info btn-sm me-1';
+                }, 2000);
+            }).catch(function(err) {
+                console.error('خطأ في النسخ: ', err);
+                alert('خطأ في نسخ المعلومات');
+            });
+        }
+        
+        function markAsProcessed(waslNumber, event) {
+            if (confirm('هل أنت متأكد من تمييز هذا الطلب كمعالج؟')) {
+                fetch('/mark_isolated_processed', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        wasl_number: waslNumber
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // إزالة الصف من الجدول
+                        const row = event.target.closest('tr');
+                        row.style.transition = 'all 0.5s ease';
+                        row.style.background = '#d4edda';
+                        row.style.opacity = '0.5';
+                        
+                        setTimeout(() => {
+                            $('#isolatedTable').DataTable().row(row).remove().draw();
+                        }, 1000);
+                        
+                        // إظهار رسالة نجاح
+                        const button = event.target.closest('button');
+                        const originalText = button.innerHTML;
+                        button.innerHTML = '<i class="fas fa-check me-1"></i> تم المعالجة';
+                        button.className = 'btn btn-success btn-sm';
+                        button.disabled = true;
+                        
+                        alert('تم تمييز الطلب كمعالج بنجاح!');
+                    } else {
+                        alert('حدث خطأ: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('خطأ:', error);
+                    alert('حدث خطأ في العملية');
+                });
+            }
+        }
+        
+        function clearFilters() {
+            $('#isolatedTable').DataTable().search('').draw();
+        }
+        
+        function exportFilteredData() {
+            const table = $('#isolatedTable').DataTable();
+            const data = table.rows({ search: 'applied' }).data();
+            
+            let csv = 'رقم الوصل,رقم الطلب,العميل,المبلغ,الحالة,سبب العزل,تاريخ العزل,المدينة\n';
+            
+            data.each(function(row) {
+                csv += row.join(',') + '\n';
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'الطلبات_المعزولة_المفلترة.csv';
+            link.click();
+        }
+        
+        // إضافة مستمعي الأحداث
+        document.addEventListener('DOMContentLoaded', function() {
+            // ملء قائمة المدن
+            const cities = new Set();
+            document.querySelectorAll('tbody tr td:nth-child(9)').forEach(cell => {
+                const city = cell.textContent.trim();
+                if (city) cities.add(city);
+            });
+            
+            const citySelect = document.getElementById('cityFilter');
+            cities.forEach(city => {
+                const option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                citySelect.appendChild(option);
+            });
+        });
+    </script>
+</body>
+</html> 
+</html> 

@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سجل المراقبة - سبونج إي</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css"/>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --card-glass: rgba(255, 255, 255, 0.95);
+            --card-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            --accent-color: #667eea;
+            --text-primary: #2c3e50;
+            --border-radius: 20px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--primary-gradient);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        .navbar {
+            background: var(--card-glass) !important;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 4px 30px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--accent-color) !important;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .nav-link {
+            font-weight: 500;
+            color: var(--text-primary) !important;
+            transition: all 0.3s ease;
+            border-radius: 10px;
+            margin: 0 5px;
+            padding: 8px 15px !important;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: var(--accent-color);
+            color: white !important;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Container */
+        .container-fluid {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--card-glass);
+            border: none;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            backdrop-filter: blur(20px);
+            margin-bottom: 30px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--accent-color), #764ba2);
+            color: white;
+            border: none;
+            padding: 20px;
+            font-weight: 600;
+        }
+
+        .card-body {
+            padding: 25px;
+        }
+
+        /* Table Styles */
+        .table {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .table thead th {
+            background: linear-gradient(135deg, var(--accent-color), #764ba2);
+            color: white;
+            font-weight: 600;
+            border: none;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .table tbody td {
+            padding: 15px;
+            vertical-align: middle;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            text-align: center;
+        }
+
+        .table tbody tr:hover {
+            background: rgba(102, 126, 234, 0.05);
+            transform: scale(1.01);
+            transition: all 0.3s ease;
+        }
+
+        /* نظام الألوان المخصص للحالات */
+        .status-accounted { background: #87CEEB !important; color: #000 !important; }
+        .status-mandob-accounted { background: #191970 !important; color: #fff !important; }
+        .status-customer-accounted { background: #6495ED !important; color: #fff !important; }
+        .status-delivered { background: #28a745 !important; color: #fff !important; }
+        .status-rejected { background: #B22222 !important; color: #fff !important; }
+        .status-partial-return-yellow { background: #FF6347 !important; color: #fff !important; }
+        .status-delayed { background: #FFA500 !important; color: #000 !important; }
+        .status-in-progress { background: #FFD700 !important; color: #000 !important; }
+        .status-unconfirmed { background: #708090 !important; color: #fff !important; }
+        .status-partial-delivered { background: #006400 !important; color: #fff !important; }
+        .status-warehouse-return { background: #8A2BE2 !important; color: #fff !important; }
+
+        /* Badges */
+        .badge {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        /* Buttons */
+        .btn {
+            border-radius: 15px;
+            font-weight: 600;
+            padding: 10px 20px;
+            border: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d, #495057);
+            color: white;
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #17a2b8, #20c997);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+
+        /* Form Controls */
+        .form-control, .form-select {
+            border-radius: 15px;
+            border: 2px solid rgba(102, 126, 234, 0.2);
+            padding: 12px 20px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        /* Change Type Highlights */
+        .change-price {
+            background: rgba(220, 53, 69, 0.1) !important;
+            border-left: 4px solid #dc3545;
+        }
+
+        .change-status {
+            background: rgba(255, 193, 7, 0.1) !important;
+            border-left: 4px solid #ffc107;
+        }
+
+        .amount-display {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        /* DataTables Customization */
+        .dataTables_wrapper .dataTables_length select,
+        .dataTables_wrapper .dataTables_filter input {
+            border-radius: 10px;
+            border: 2px solid rgba(102, 126, 234, 0.2);
+            padding: 8px 15px;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            border-radius: 10px !important;
+            margin: 0 2px;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            background: var(--accent-color) !important;
+            border-color: var(--accent-color) !important;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container-fluid {
+                padding: 15px;
+            }
+
+            .card-body {
+                padding: 20px;
+            }
+
+            .table {
+                font-size: 0.9rem;
+            }
+
+            .table thead th,
+            .table tbody td {
+                padding: 10px 8px;
+            }
+
+            .btn {
+                padding: 8px 15px;
+                font-size: 0.9rem;
+            }
+
+            .btn-sm {
+                padding: 5px 10px;
+                font-size: 0.75rem;
+            }
+
+            .badge {
+                font-size: 0.8rem;
+                padding: 6px 12px;
+            }
+
+            .navbar-nav {
+                background: rgba(255,255,255,0.95);
+                border-radius: 15px;
+                padding: 10px;
+                margin-top: 10px;
+            }
+        }
+
+        /* Animation */
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card {
+            animation: slideInUp 0.6s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-eye me-2"></i>
+                سبونج إي
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">
+                            <i class="fas fa-home me-1"></i> الرئيسية
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/today_orders">
+                            <i class="fas fa-calendar-day me-1"></i> طلبات اليوم
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/customers">
+                            <i class="fas fa-users me-1"></i> العملاء
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/agent_commission">
+                            <i class="fas fa-money-bill-wave me-1"></i> حساب مستحق
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/isolated">
+                            <i class="fas fa-exclamation-triangle me-1"></i> المعزولة
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/suspended">
+                            <i class="fas fa-clock me-1"></i> المعلقات
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/processed_orders">
+                            <i class="fas fa-check-circle me-1"></i> المعالجة
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/monitoring">
+                            <i class="fas fa-chart-line me-1"></i> المراقبة
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <!-- Filter Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-filter me-2"></i>
+                    فلترة البيانات
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <label class="form-label">البحث في النص:</label>
+                        <input type="text" class="form-control" id="searchInput" placeholder="ابحث في أي حقل...">
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <label class="form-label">نوع التغيير:</label>
+                        <select class="form-select" id="changeTypeFilter">
+                            <option value="">جميع الأنواع</option>
+                            <option value="تغيير السعر">تغيير السعر</option>
+                            <option value="تغيير الحالة">تغيير الحالة</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <label class="form-label">التاريخ:</label>
+                        <select class="form-select" id="dateFilter">
+                            <option value="">جميع التواريخ</option>
+                            <option value="today">اليوم</option>
+                            <option value="yesterday">أمس</option>
+                            <option value="week">هذا الأسبوع</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <label class="form-label">العميل:</label>
+                        <select class="form-select" id="customerFilter">
+                            <option value="">جميع العملاء</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <button class="btn btn-secondary me-2" onclick="clearFilters()">
+                            <i class="fas fa-times me-1"></i>
+                            مسح الفلاتر
+                        </button>
+                        <button class="btn btn-info" onclick="exportFilteredData()">
+                            <i class="fas fa-download me-1"></i>
+                            تصدير البيانات المفلترة
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0" id="tableTitle">
+                    <i class="fas fa-chart-line me-2"></i>
+                    سجل المراقبة - {{ logs|length }} سجل
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover w-100" id="monitoringTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>رقم الوصل</th>
+                                <th>العميل</th>
+                                <th>السعر القديم</th>
+                                <th>السعر الجديد</th>
+                                <th>الحالة القديمة</th>
+                                <th>الحالة الجديدة</th>
+                                <th>نوع التغيير</th>
+                                <th>تاريخ الكشف</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in logs %}
+                            <tr class="{{ 'change-price' if log.change_type == 'price_change' else 'change-status' }}">
+                                <td><strong>{{ loop.index }}</strong></td>
+                                <td><span class="badge bg-primary">{{ log.wasl_number }}</span></td>
+                                <td><span class="fw-bold text-primary">{{ log.customer_name }}</span></td>
+                                <td class="amount-display text-danger">{{ format_iraqi_dinar(log.old_total_amount) }}</td>
+                                <td class="amount-display text-success">{{ format_iraqi_dinar(log.new_total_amount) }}</td>
+                                <td>
+                                    <span class="badge {{ get_custom_status_class(log.old_status) }}">
+                                        {{ log.old_status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge {{ get_custom_status_class(log.new_status) }}">
+                                        {{ log.new_status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge {{ 'bg-danger' if log.change_type == 'price_change' else 'bg-warning' }}">
+                                        {{ 'تغيير السعر' if log.change_type == 'price_change' else 'تغيير الحالة' }}
+                                    </span>
+                                </td>
+                                <td><small class="text-muted">{{ log.detected_at }}</small></td>
+                                <td>
+                                    <button class="btn btn-info btn-sm me-1" 
+                                            title="نسخ معلومات الطلب"
+                                            onclick="copyOrderInfo(event, '{{ log.wasl_number }}', '{{ log.customer_name }}', '{{ format_iraqi_dinar(log.new_total_amount) }}', '{{ log.new_status }}', '{{ log.customer_phone }}', '{{ log.city }}', '{{ log.area }}')">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                    <a class="btn btn-secondary btn-sm" 
+                                       title="طباعة الوصل"
+                                       href="https://alkarar-exp.com/print_waslAll.php?wasl_id={{ log.order_number }}" 
+                                       target="_blank">
+                                        <i class="fas fa-print"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            // تفعيل DataTables
+            var table = $('#monitoringTable').DataTable({
+                "paging": true,
+                "lengthMenu": [10, 20, 30, 40, 50, 60, 70, 100],
+                "pageLength": 20,
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/ar.json"
+                },
+                "ordering": true,
+                "info": true,
+                "searching": true,
+                "responsive": true,
+                "autoWidth": false,
+                "order": [[0, "desc"]], // ترتيب حسب أحدث سجل
+                "columnDefs": [
+                    {
+                        "targets": [3, 4], // أعمدة المبالغ
+                        "type": "num-fmt"
+                    }
+                ],
+                "drawCallback": function(settings) {
+                    // تحديث العداد
+                    updateFilterCounter(this.api());
+                }
+            });
+            
+            // إعداد الفلاتر
+            setupFilters(table);
+            
+            // ملء قائمة العملاء
+            populateCustomerFilter();
+        });
+        
+        function setupFilters(table) {
+            // فلتر البحث النصي
+            $('#searchInput').on('keyup', function() {
+                table.search(this.value).draw();
+            });
+            
+            // فلتر نوع التغيير
+            $('#changeTypeFilter').on('change', function() {
+                var value = this.value;
+                if (value === '') {
+                    table.column(7).search('').draw();
+                } else {
+                    table.column(7).search(value).draw();
+                }
+            });
+            
+            // فلتر العميل
+            $('#customerFilter').on('change', function() {
+                var value = this.value;
+                if (value === '') {
+                    table.column(2).search('').draw();
+                } else {
+                    table.column(2).search(value).draw();
+                }
+            });
+            
+            // فلتر التاريخ
+            $('#dateFilter').on('change', function() {
+                var value = this.value;
+                if (value === '') {
+                    // مسح فلتر التاريخ
+                    $.fn.dataTable.ext.search = $.fn.dataTable.ext.search.filter(function(fn) {
+                        return fn.name !== 'dateFilter';
+                    });
+                } else {
+                    // إزالة فلتر التاريخ السابق
+                    $.fn.dataTable.ext.search = $.fn.dataTable.ext.search.filter(function(fn) {
+                        return fn.name !== 'dateFilter';
+                    });
+                    
+                    // إضافة فلتر تاريخ جديد
+                    var dateFilterFn = function(settings, data, dataIndex) {
+                        if (settings.nTable.id !== 'monitoringTable') {
+                            return true;
+                        }
+                        
+                        var dateText = data[8]; // العمود التاسع (تاريخ الكشف)
+                        var logDate = new Date(dateText);
+                        var today = new Date();
+                        
+                        switch(value) {
+                            case 'today':
+                                return logDate.toDateString() === today.toDateString();
+                            case 'yesterday':
+                                var yesterday = new Date(today);
+                                yesterday.setDate(yesterday.getDate() - 1);
+                                return logDate.toDateString() === yesterday.toDateString();
+                            case 'week':
+                                var weekAgo = new Date(today);
+                                weekAgo.setDate(weekAgo.getDate() - 7);
+                                return logDate >= weekAgo;
+                            default:
+                                return true;
+                        }
+                    };
+                    dateFilterFn.name = 'dateFilter';
+                    $.fn.dataTable.ext.search.push(dateFilterFn);
+                }
+                table.draw();
+            });
+        }
+        
+        function populateCustomerFilter() {
+            const customers = new Set();
+            $('#monitoringTable tbody tr').each(function() {
+                const customer = $(this).find('td:nth-child(3)').text().trim();
+                if (customer) customers.add(customer);
+            });
+            
+            const customerSelect = $('#customerFilter');
+            customers.forEach(customer => {
+                customerSelect.append(`<option value="${customer}">${customer}</option>`);
+            });
+        }
+        
+        // مسح الفلاتر
+        function clearFilters() {
+            var table = $('#monitoringTable').DataTable();
+            
+            // مسح البحث العام
+            table.search('');
+            
+            // مسح البحث في الأعمدة
+            table.columns().search('');
+            
+            // مسح الفلاتر المخصصة
+            $.fn.dataTable.ext.search = [];
+            
+            // مسح قيم الحقول
+            $('#searchInput').val('');
+            $('#changeTypeFilter').val('');
+            $('#dateFilter').val('');
+            $('#customerFilter').val('');
+            
+            // إعادة رسم الجدول
+            table.draw();
+        }
+        
+        // تصدير البيانات المفلترة
+        function exportFilteredData() {
+            const table = $('#monitoringTable').DataTable();
+            const data = table.rows({ search: 'applied' }).data();
+            
+            let csv = 'رقم الوصل,العميل,السعر القديم,السعر الجديد,الحالة القديمة,الحالة الجديدة,نوع التغيير,تاريخ الكشف\n';
+            
+            data.each(function(row) {
+                // تنظيف البيانات من HTML
+                const cleanRow = row.map(cell => {
+                    if (typeof cell === 'string') {
+                        return cell.replace(/<[^>]*>/g, '').trim();
+                    }
+                    return cell;
+                });
+                csv += cleanRow.slice(1, 9).join(',') + '\n'; // تجاهل العمود الأول والأخير
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'سجلات_المراقبة_المفلترة.csv';
+            link.click();
+        }
+        
+        // دالة نسخ معلومات الطلب
+        function copyOrderInfo(event, waslNumber, customerName, amount, status, phone, city, area) {
+            const orderInfo = `🧾 رقم الوصل: ${waslNumber}
+🔴 هاتف الزبون: ${phone || 'غير محدد'}
+🏢 المحافظة: ${city || 'غير محدد'}
+🏢 المنطقة: ${area || 'غير محدد'}
+🔴 السعر: ${amount}
+📛 اسم العميل: ${customerName}
+📊 الحالة: ${status}`;
+            
+            navigator.clipboard.writeText(orderInfo).then(function() {
+                // إظهار رسالة نجاح
+                const button = event.target.closest('button');
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-check"></i>';
+                button.className = 'btn btn-success btn-sm me-1';
+                
+                setTimeout(function() {
+                    button.innerHTML = originalText;
+                    button.className = 'btn btn-info btn-sm me-1';
+                }, 2000);
+            }).catch(function(err) {
+                console.error('خطأ في النسخ: ', err);
+                alert('خطأ في نسخ المعلومات');
+            });
+        }
+        
+        // تحديث عداد السجلات المفلترة
+        function updateFilterCounter(table) {
+            const filteredCount = table.rows({ search: 'applied' }).count();
+            const totalCount = table.rows().count();
+            
+            // تحديث عنوان البطاقة
+            const cardTitle = $('#tableTitle');
+            if (filteredCount === totalCount) {
+                cardTitle.html('<i class="fas fa-chart-line me-2"></i>سجل المراقبة - ' + totalCount + ' سجل');
+            } else {
+                cardTitle.html('<i class="fas fa-chart-line me-2"></i>سجل المراقبة - ' + filteredCount + ' من ' + totalCount + ' سجل');
+            }
+        }
+    </script>
+</body>
+</html> 

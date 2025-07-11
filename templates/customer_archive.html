@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ customer_name }} - أرشيف الطلبات - سبونج إي</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .card {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            backdrop-filter: blur(15px);
+            background: rgba(255,255,255,0.95);
+            transition: transform 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .navbar {
+            background: rgba(255,255,255,0.95) !important;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .table {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        .table th {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            font-weight: 600;
+        }
+        .nav-link {
+            border-radius: 25px;
+            margin: 0 5px;
+            transition: all 0.3s ease;
+        }
+        .nav-link:hover {
+            background: rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+        .nav-link.active {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white !important;
+        }
+        .amount-display {
+            font-weight: 700;
+            color: #28a745;
+        }
+        .status-badge {
+            border-radius: 20px;
+            padding: 8px 15px;
+            font-weight: 600;
+        }
+        .customer-header {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .stats-row {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .archive-badge {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        .bg-success {
+            background: linear-gradient(45deg, #28a745, #20c997) !important;
+        }
+        .bg-warning {
+            background: linear-gradient(45deg, #ffc107, #fd7e14) !important;
+        }
+        .bg-danger {
+            background: linear-gradient(45deg, #dc3545, #e83e8c) !important;
+        }
+        .bg-primary {
+            background: linear-gradient(45deg, #007bff, #6610f2) !important;
+        }
+        .bg-info {
+            background: linear-gradient(45deg, #17a2b8, #20c997) !important;
+        }
+        .bg-secondary {
+            background: linear-gradient(45deg, #6c757d, #495057) !important;
+        }
+        
+        /* نظام الألوان المخصص للحالات */
+        .status-accounted { background: #87CEEB !important; color: #000 !important; }
+        .status-mandob-accounted { background: #191970 !important; color: #fff !important; }
+        .status-customer-accounted { background: #6495ED !important; color: #fff !important; }
+        .status-delivered { background: #28a745 !important; color: #fff !important; }
+        .status-rejected { background: #B22222 !important; color: #fff !important; }
+        .status-partial-return-yellow { background: #FF6347 !important; color: #fff !important; }
+        .status-delayed { background: #FFA500 !important; color: #000 !important; }
+        .status-in-progress { background: #FFD700 !important; color: #000 !important; }
+        .status-unconfirmed { background: #708090 !important; color: #fff !important; }
+        .status-partial-delivered { background: #006400 !important; color: #fff !important; }
+        .status-warehouse-return { background: #8A2BE2 !important; color: #fff !important; }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="fas fa-eye me-2"></i>
+                سبونج إي
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/"><i class="fas fa-home me-1"></i> الرئيسية</a>
+                <a class="nav-link" href="/today_orders"><i class="fas fa-calendar-day me-1"></i> طلبات اليوم</a>
+                <a class="nav-link" href="/customers"><i class="fas fa-users me-1"></i> العملاء</a>
+                <a class="nav-link" href="/agent_commission"><i class="fas fa-money-bill-wave me-1"></i> حساب مستحق</a>
+                <a class="nav-link" href="/isolated"><i class="fas fa-exclamation-triangle me-1"></i> المعزولة</a>
+                <a class="nav-link" href="/suspended"><i class="fas fa-clock me-1"></i> المعلقات</a>
+                <a class="nav-link" href="/processed_orders"><i class="fas fa-check-circle me-1"></i> المعالجة</a>
+                <a class="nav-link" href="/monitoring"><i class="fas fa-history me-1"></i> السجل</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Customer Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-archive me-2"></i>أرشيف العميل: {{ customer_name }}</h2>
+            <div>
+                <a href="/suspended" class="btn btn-warning btn-lg">
+                    <i class="fas fa-clock me-2"></i>
+                    كشف المعلقات
+                </a>
+            </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-filter me-2"></i>
+                    فلترة البيانات
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label class="form-label">البحث في النص:</label>
+                        <input type="text" class="form-control" id="searchInput" placeholder="ابحث في أي حقل...">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">الحالة:</label>
+                        <select class="form-select" id="statusFilter">
+                            <option value="">جميع الحالات</option>
+                            <option value="تم التسليم">تم التسليم</option>
+                            <option value="تم مراجعة العميل">تم مراجعة العميل</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">المبلغ:</label>
+                        <select class="form-select" id="amountFilter">
+                            <option value="">جميع المبالغ</option>
+                            <option value="0-10000">أقل من 10,000</option>
+                            <option value="10000-50000">10,000 - 50,000</option>
+                            <option value="50000-100000">50,000 - 100,000</option>
+                            <option value="100000+">أكثر من 100,000</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">التاريخ:</label>
+                        <select class="form-select" id="dateFilter">
+                            <option value="">جميع التواريخ</option>
+                            <option value="today">اليوم</option>
+                            <option value="yesterday">أمس</option>
+                            <option value="week">هذا الأسبوع</option>
+                            <option value="month">هذا الشهر</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <button class="btn btn-secondary" onclick="clearFilters()">
+                            <i class="fas fa-times me-1"></i>
+                            مسح الفلاتر
+                        </button>
+                        <button class="btn btn-info" onclick="exportFilteredData()">
+                            <i class="fas fa-download me-1"></i>
+                            تصدير البيانات المفلترة
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Orders Table -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-archive me-2"></i>
+                    أرشيف طلبات {{ customer_name }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>رقم الوصل</th>
+                                <th>رقم الطلب</th>
+                                <th>المبلغ</th>
+                                <th>رسوم التوصيل</th>
+                                <th>المبلغ الصافي</th>
+                                <th>الحالة</th>
+                                <th>التاريخ</th>
+                                <th>المدينة</th>
+                                <th>المنطقة</th>
+                                <th>المندوب</th>
+                                <th>رقم الهاتف</th>
+                                <th>أضيف بواسطة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in orders %}
+                            <tr>
+                                <td><strong>{{ loop.index }}</strong></td>
+                                <td><strong>{{ order.wasl_number }}</strong></td>
+                                <td>{{ order.order_number }}</td>
+                                <td class="amount-display">{{ format_iraqi_dinar(order.total_amount) }}</td>
+                                <td class="amount-display">{{ format_iraqi_dinar(order.delivery_fee) }}</td>
+                                <td class="amount-display">{{ format_iraqi_dinar(order.net_amount) }}</td>
+                                <td>
+                                    <span class="status-badge badge bg-{{ get_status_color(order.status) }}">
+                                        {{ order.status }}
+                                    </span>
+                                </td>
+                                <td>{{ order.add_date }}</td>
+                                <td>{{ order.city }}</td>
+                                <td>{{ order.area }}</td>
+                                <td>{{ order.mandob_name }}</td>
+                                <td>{{ order.customer_phone }}</td>
+                                <td>{{ order.added_by }}</td>
+                                <td>
+                                    <button class="btn btn-info btn-sm me-1" 
+                                            title="نسخ معلومات الطلب"
+                                            onclick="copyOrderInfo(event, '{{ order.wasl_number }}', '{{ order.customer_name }}', '{{ format_iraqi_dinar(order.total_amount) }}', '{{ order.status }}', '{{ order.customer_phone }}', '{{ order.city }}', '{{ order.area }}')">
+                                        <i class="fas fa-copy me-1"></i> نسخ
+                                    </button>
+                                    <a class="btn btn-secondary btn-sm me-1" 
+                                       title="طباعة الوصل"
+                                       href="https://alkarar-exp.com/print_waslAll.php?wasl_id={{ order.order_number }}" 
+                                       target="_blank">
+                                        <i class="fas fa-print me-1"></i> طباعة
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function copyOrderInfo(event, waslNumber, customerName, amount, status, phone, city, area) {
+            const orderInfo = `🧾 رقم الوصل: ${waslNumber}
+🔴 هاتف الزبون: ${phone || 'غير محدد'}
+🏢 المحافظة: ${city || 'غير محدد'}
+🏢 المنطقة: ${area || 'غير محدد'}
+🔴 السعر: ${amount}
+📛 اسم العميل: ${customerName}
+📊 الحالة: ${status}`;
+            
+            navigator.clipboard.writeText(orderInfo).then(function() {
+                // إظهار رسالة نجاح
+                const button = event.target.closest('button');
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-check me-1"></i> تم النسخ';
+                button.className = 'btn btn-success btn-sm me-1';
+                
+                setTimeout(function() {
+                    button.innerHTML = originalText;
+                    button.className = 'btn btn-info btn-sm me-1';
+                }, 2000);
+            }).catch(function(err) {
+                console.error('خطأ في النسخ: ', err);
+                alert('خطأ في نسخ المعلومات');
+            });
+        }
+        
+        // دالة الفلترة
+        function filterData() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            const amountFilter = document.getElementById('amountFilter').value;
+            const dateFilter = document.getElementById('dateFilter').value;
+            
+            const rows = document.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                let show = true;
+                
+                // فلترة النص
+                if (searchTerm) {
+                    const text = row.textContent.toLowerCase();
+                    if (!text.includes(searchTerm)) {
+                        show = false;
+                    }
+                }
+                
+                // فلترة الحالة
+                if (statusFilter && show) {
+                    const status = row.querySelector('.badge')?.textContent.trim();
+                    if (status !== statusFilter) {
+                        show = false;
+                    }
+                }
+                
+                // فلترة المبلغ
+                if (amountFilter && show) {
+                    const amountText = row.querySelector('.amount-display')?.textContent;
+                    const amount = parseFloat(amountText?.replace(/[^\d]/g, '') || '0');
+                    
+                    switch(amountFilter) {
+                        case '0-10000':
+                            if (amount >= 10000) show = false;
+                            break;
+                        case '10000-50000':
+                            if (amount < 10000 || amount >= 50000) show = false;
+                            break;
+                        case '50000-100000':
+                            if (amount < 50000 || amount >= 100000) show = false;
+                            break;
+                        case '100000+':
+                            if (amount < 100000) show = false;
+                            break;
+                    }
+                }
+                
+                // فلترة التاريخ
+                if (dateFilter && show) {
+                    const dateText = row.querySelector('td:nth-child(7)')?.textContent.trim();
+                    const orderDate = new Date(dateText);
+                    const today = new Date();
+                    
+                    switch(dateFilter) {
+                        case 'today':
+                            if (orderDate.toDateString() !== today.toDateString()) show = false;
+                            break;
+                        case 'yesterday':
+                            const yesterday = new Date(today);
+                            yesterday.setDate(yesterday.getDate() - 1);
+                            if (orderDate.toDateString() !== yesterday.toDateString()) show = false;
+                            break;
+                        case 'week':
+                            const weekAgo = new Date(today);
+                            weekAgo.setDate(weekAgo.getDate() - 7);
+                            if (orderDate < weekAgo) show = false;
+                            break;
+                        case 'month':
+                            const monthAgo = new Date(today);
+                            monthAgo.setMonth(monthAgo.getMonth() - 1);
+                            if (orderDate < monthAgo) show = false;
+                            break;
+                    }
+                }
+                
+                row.style.display = show ? '' : 'none';
+            });
+        }
+        
+        // مسح الفلاتر
+        function clearFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('amountFilter').value = '';
+            document.getElementById('dateFilter').value = '';
+            
+            const rows = document.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                row.style.display = '';
+            });
+        }
+        
+        // تصدير البيانات المفلترة
+        function exportFilteredData() {
+            const visibleRows = Array.from(document.querySelectorAll('tbody tr')).filter(row => 
+                row.style.display !== 'none'
+            );
+            
+            let csv = 'رقم الوصل,رقم الطلب,المبلغ,الحالة,التاريخ\n';
+            
+            visibleRows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                const rowData = [
+                    cells[1]?.textContent.trim(),
+                    cells[2]?.textContent.trim(),
+                    cells[3]?.textContent.trim(),
+                    cells[4]?.querySelector('.badge')?.textContent.trim(),
+                    cells[5]?.textContent.trim()
+                ];
+                csv += rowData.join(',') + '\n';
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'أرشيف_العميل_المفلترة.csv';
+            link.click();
+        }
+        
+        // دالة تطبيق الألوان المخصصة للحالات
+        function applyCustomStatusColors() {
+            $('.badge').each(function() {
+                const status = $(this).text().trim();
+                $(this).removeClass('bg-success bg-warning bg-danger bg-primary bg-info bg-secondary');
+                
+                switch(status) {
+                    case 'تم المحاسبة':
+                        $(this).addClass('status-accounted');
+                        break;
+                    case 'تم محاسبة المندوب':
+                        $(this).addClass('status-mandob-accounted');
+                        break;
+                    case 'تم محاسبة العميل':
+                        $(this).addClass('status-customer-accounted');
+                        break;
+                    case 'تم التسليم':
+                        $(this).addClass('status-delivered');
+                        break;
+                    case 'رفض':
+                        $(this).addClass('status-rejected');
+                        break;
+                    case 'راجع جزئي':
+                        $(this).addClass('status-partial-return-yellow');
+                        break;
+                    case 'راجع مخزن':
+                        $(this).addClass('status-warehouse-return');
+                        break;
+                    case 'مؤجل':
+                        $(this).addClass('status-delayed');
+                        break;
+                    case 'قيد التنفيذ':
+                        $(this).addClass('status-in-progress');
+                        break;
+                    case 'غير مؤكد':
+                        $(this).addClass('status-unconfirmed');
+                        break;
+                    case 'واصل جزئي':
+                        $(this).addClass('status-partial-delivered');
+                        break;
+                    default:
+                        $(this).addClass('status-unconfirmed');
+                }
+            });
+        }
+        
+        // إضافة مستمعي الأحداث
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('searchInput').addEventListener('input', filterData);
+            document.getElementById('statusFilter').addEventListener('change', filterData);
+            document.getElementById('amountFilter').addEventListener('change', filterData);
+            document.getElementById('dateFilter').addEventListener('change', filterData);
+            
+            // تطبيق الألوان المخصصة عند تحميل الصفحة
+            applyCustomStatusColors();
+        });
+    </script>
+</body>
+</html> 

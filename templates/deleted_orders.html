@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>أرشيف الطلبات المحذوفة - سبونج إي</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css"/>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --card-glass: rgba(255, 255, 255, 0.95);
+            --card-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            --accent-color: #667eea;
+            --text-primary: #2c3e50;
+            --border-radius: 20px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--primary-gradient);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        .navbar {
+            background: var(--card-glass) !important;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 4px 30px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--accent-color) !important;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .nav-link {
+            font-weight: 500;
+            color: var(--text-primary) !important;
+            transition: all 0.3s ease;
+            border-radius: 10px;
+            margin: 0 5px;
+            padding: 8px 15px !important;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: var(--accent-color);
+            color: white !important;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Container */
+        .container-fluid {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--card-glass);
+            border: none;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            backdrop-filter: blur(20px);
+            margin-bottom: 30px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #dc3545, #b02a37);
+            color: white;
+            border: none;
+            padding: 20px;
+            font-weight: 600;
+        }
+
+        .card-body {
+            padding: 25px;
+        }
+
+        /* Table Styles */
+        .table {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .table thead th {
+            background: linear-gradient(135deg, #dc3545, #b02a37);
+            color: white;
+            font-weight: 600;
+            border: none;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .table tbody td {
+            padding: 15px;
+            vertical-align: middle;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            text-align: center;
+        }
+
+        .table tbody tr:hover {
+            background: rgba(220, 53, 69, 0.05);
+            transform: scale(1.01);
+            transition: all 0.3s ease;
+        }
+
+        /* نظام الألوان المخصص للحالات */
+        .status-accounted { background: #87CEEB !important; color: #000 !important; }
+        .status-mandob-accounted { background: #191970 !important; color: #fff !important; }
+        .status-customer-accounted { background: #6495ED !important; color: #fff !important; }
+        .status-delivered { background: #28a745 !important; color: #fff !important; }
+        .status-rejected { background: #B22222 !important; color: #fff !important; }
+        .status-partial-return-yellow { background: #FF6347 !important; color: #fff !important; }
+        .status-delayed { background: #FFA500 !important; color: #000 !important; }
+        .status-in-progress { background: #FFD700 !important; color: #000 !important; }
+        .status-unconfirmed { background: #708090 !important; color: #fff !important; }
+        .status-partial-delivered { background: #006400 !important; color: #fff !important; }
+        .status-warehouse-return { background: #8A2BE2 !important; color: #fff !important; }
+
+        /* Badges */
+        .badge {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        /* Buttons */
+        .btn {
+            border-radius: 15px;
+            font-weight: 600;
+            padding: 8px 20px;
+            border: none;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107, #fd7e14);
+            color: white;
+        }
+
+        /* DataTables Customization */
+        .dataTables_wrapper .dataTables_length select,
+        .dataTables_wrapper .dataTables_filter input {
+            border-radius: 10px;
+            border: 2px solid rgba(220, 53, 69, 0.2);
+            padding: 8px 15px;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            border-radius: 10px !important;
+            margin: 0 2px;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            background: #dc3545 !important;
+            border-color: #dc3545 !important;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container-fluid {
+                padding: 15px;
+            }
+
+            .card-body {
+                padding: 20px;
+            }
+
+            .table {
+                font-size: 0.9rem;
+            }
+
+            .table thead th,
+            .table tbody td {
+                padding: 10px 8px;
+            }
+
+            .btn {
+                padding: 6px 15px;
+                font-size: 0.8rem;
+            }
+
+            .navbar-nav {
+                background: rgba(255,255,255,0.95);
+                border-radius: 15px;
+                padding: 10px;
+                margin-top: 10px;
+            }
+        }
+
+        /* Animation */
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card {
+            animation: slideInUp 0.6s ease-out;
+        }
+
+        /* Alert Styles */
+        .alert {
+            border-radius: 15px;
+            border: none;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+        }
+
+        .alert-warning {
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-eye me-2"></i>
+                سبونج إي
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">
+                            <i class="fas fa-home me-1"></i> الرئيسية
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/today_orders">
+                            <i class="fas fa-calendar-day me-1"></i> طلبات اليوم
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/customers">
+                            <i class="fas fa-users me-1"></i> العملاء
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/agent_commission">
+                            <i class="fas fa-money-bill-wave me-1"></i> حساب مستحق
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/isolated">
+                            <i class="fas fa-exclamation-triangle me-1"></i> المعزولة
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/suspended">
+                            <i class="fas fa-clock me-1"></i> المعلقات
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/processed_orders">
+                            <i class="fas fa-check-circle me-1"></i> المعالجة
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/deleted_orders">
+                            <i class="fas fa-trash-restore me-1"></i> أرشيف المحذوفات
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/monitoring">
+                            <i class="fas fa-chart-line me-1"></i> المراقبة
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold">
+                <i class="fas fa-trash-restore me-2 text-danger"></i>
+                أرشيف الطلبات المحذوفة
+            </h2>
+            <div>
+                <span class="badge bg-danger fs-6">{{ orders|length }} طلب محذوف</span>
+            </div>
+        </div>
+
+        <!-- Warning Alert -->
+        {% if orders|length == 0 %}
+        <div class="alert alert-warning">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>لا توجد طلبات محذوفة!</strong> جميع الطلبات المحذوفة ستظهر هنا مع إمكانية الاستعادة.
+        </div>
+        {% endif %}
+
+        <!-- Data Table -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-archive me-2"></i>
+                    أرشيف الطلبات المحذوفة - {{ orders|length }} طلب
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover w-100" id="deletedOrdersTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>رقم الوصل</th>
+                                <th>رقم الطلب</th>
+                                <th>اسم العميل</th>
+                                <th>المندوب</th>
+                                <th>المحافظة</th>
+                                <th>المنطقة</th>
+                                <th>الهاتف</th>
+                                <th>المبلغ الإجمالي</th>
+                                <th>الحالة</th>
+                                <th>تاريخ الإضافة</th>
+                                <th>تاريخ الحذف</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in orders %}
+                            <tr>
+                                <td><strong>{{ loop.index }}</strong></td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ order.wasl_number }}</span>
+                                </td>
+                                <td>{{ order.order_number }}</td>
+                                <td>
+                                    <span class="fw-bold text-primary">{{ order.customer_name }}</span>
+                                </td>
+                                <td>{{ order.mandob_name or 'غير محدد' }}</td>
+                                <td>{{ order.city or 'غير محدد' }}</td>
+                                <td>{{ order.area or 'غير محدد' }}</td>
+                                <td>{{ order.customer_phone or 'غير محدد' }}</td>
+                                <td class="fw-bold text-success">{{ format_iraqi_dinar(order.total_amount) }}</td>
+                                <td>
+                                    <span class="badge {{ get_custom_status_class(order.status) }}">
+                                        {{ order.status }}
+                                    </span>
+                                </td>
+                                <td>{{ order.add_date or 'غير محدد' }}</td>
+                                <td>
+                                    <small class="text-muted">{{ order.deleted_at }}</small>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-success btn-sm" 
+                                                onclick="restoreOrder({{ order.id }}, '{{ order.wasl_number }}')"
+                                                title="استعادة الطلب">
+                                            <i class="fas fa-undo me-1"></i>
+                                            استعادة
+                                        </button>
+                                        <button class="btn btn-warning btn-sm" 
+                                                onclick="copyOrderInfo('{{ order.wasl_number }}', '{{ order.customer_name }}', '{{ format_iraqi_dinar(order.total_amount) }}', '{{ order.status }}', '{{ order.customer_phone }}', '{{ order.city }}', '{{ order.area }}')"
+                                                title="نسخ معلومات الطلب">
+                                            <i class="fas fa-copy me-1"></i>
+                                            نسخ
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            // تفعيل DataTables
+            $('#deletedOrdersTable').DataTable({
+                "paging": true,
+                "lengthMenu": [10, 20, 30, 40, 50, 60, 70, 100],
+                "pageLength": 20,
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/ar.json"
+                },
+                "ordering": true,
+                "info": true,
+                "searching": true,
+                "responsive": true,
+                "autoWidth": false,
+                "order": [[11, "desc"]], // ترتيب حسب تاريخ الحذف
+                "drawCallback": function(settings) {
+                    // تطبيق نظام الألوان المخصص بعد إعادة رسم الجدول
+                    applyCustomStatusColors();
+                }
+            });
+            
+            // تطبيق نظام الألوان المخصص
+            applyCustomStatusColors();
+        });
+        
+        // تطبيق نظام الألوان المخصص للحالات
+        function applyCustomStatusColors() {
+            $('.badge').each(function() {
+                const status = $(this).text().trim();
+                
+                // إزالة الألوان السابقة
+                $(this).removeClass('bg-success bg-warning bg-danger bg-primary bg-info bg-secondary');
+                
+                switch(status) {
+                    case 'تم المحاسبة':
+                        $(this).addClass('status-accounted');
+                        break;
+                    case 'تم محاسبة المندوب':
+                        $(this).addClass('status-mandob-accounted');
+                        break;
+                    case 'تم محاسبة العميل':
+                        $(this).addClass('status-customer-accounted');
+                        break;
+                    case 'تم التسليم':
+                        $(this).addClass('status-delivered');
+                        break;
+                    case 'رفض':
+                        $(this).addClass('status-rejected');
+                        break;
+                    case 'راجع جزئي':
+                        $(this).addClass('status-partial-return-yellow');
+                        break;
+                    case 'مؤجل':
+                        $(this).addClass('status-delayed');
+                        break;
+                    case 'قيد التنفيذ':
+                        $(this).addClass('status-in-progress');
+                        break;
+                    case 'غير مؤكد':
+                        $(this).addClass('status-unconfirmed');
+                        break;
+                    case 'واصل جزئي':
+                        $(this).addClass('status-partial-delivered');
+                        break;
+                    case 'راجع مخزن':
+                        $(this).addClass('status-warehouse-return');
+                        break;
+                    default:
+                        $(this).addClass('status-unconfirmed');
+                }
+            });
+        }
+        
+        // دالة استعادة الطلب
+        function restoreOrder(orderId, waslNumber) {
+            if (confirm(`هل أنت متأكد من استعادة الطلب رقم ${waslNumber}؟`)) {
+                $.ajax({
+                    url: `/restore_order/${orderId}`,
+                    method: 'POST',
+                    success: function(response) {
+                        location.reload();
+                    },
+                    error: function(xhr, status, error) {
+                        alert('حدث خطأ في استعادة الطلب');
+                    }
+                });
+            }
+        }
+        
+        // دالة نسخ معلومات الطلب
+        function copyOrderInfo(waslNumber, customerName, amount, status, phone, city, area) {
+            const orderInfo = `🧾 رقم الوصل: ${waslNumber}
+🔴 هاتف الزبون: ${phone || 'غير محدد'}
+🏢 المحافظة: ${city || 'غير محدد'}
+🏢 المنطقة: ${area || 'غير محدد'}
+🔴 السعر: ${amount}
+📛 اسم العميل: ${customerName}
+📊 الحالة: ${status}
+🗂️ ملاحظة: طلب محذوف من الأرشيف`;
+            
+            navigator.clipboard.writeText(orderInfo).then(function() {
+                // إظهار رسالة نجاح
+                alert('تم نسخ معلومات الطلب بنجاح!');
+            }).catch(function(err) {
+                console.error('خطأ في النسخ: ', err);
+                alert('خطأ في نسخ المعلومات');
+            });
+        }
+    </script>
+</body>
+</html> 
